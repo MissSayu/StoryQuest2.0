@@ -1,0 +1,8 @@
+com\vonk\storyquest\config\SecurityConfig.class
+com\vonk\storyquest\repository\UserRepository.class
+com\vonk\storyquest\StoryquestApplication.class
+com\vonk\storyquest\controller\AuthController.class
+com\vonk\storyquest\service\UserService.class
+com\vonk\storyquest\DataInitializer.class
+com\vonk\storyquest\model\User.class
+HttpStatus\UNAUTHORIZED.class
