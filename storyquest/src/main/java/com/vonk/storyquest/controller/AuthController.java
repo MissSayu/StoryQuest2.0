@@ -1,34 +1,26 @@
 package com.vonk.storyquest.controller;
 
-import com.vonk.storyquest.dto.LoginRequest;
-import com.vonk.storyquest.model.User;
-import com.vonk.storyquest.service.AuthService;
-import org.springframework.http.ResponseEntity;
+import com.vonk.storyquest.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "*") // of je frontend URL
 public class AuthController {
 
-    private final AuthService authService;
+    private final UserService userService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    public AuthController(UserService userService) {
+        this.userService = userService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        try {
-            User user = authService.login(loginRequest);
-            return ResponseEntity.ok(user);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+    public String login(@RequestParam String username, @RequestParam String password) {
+        boolean success = userService.checkPassword(username, password);
+        if (success) {
+            return "Login successful"; // later kun je token of sessie teruggeven
+        } else {
+            return "Invalid username or password";
         }
-    }
-
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("AuthController is actief!");
     }
 }

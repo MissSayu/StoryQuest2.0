@@ -5,6 +5,7 @@ import com.vonk.storyquest.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -18,6 +19,7 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        return userService.findByUsername("Sayu").isPresent() ? userService.findByUsername("Sayu").stream().toList() : List.of();
+        Optional<User> user = userService.findByUsername("Sayu");
+        return user != null ? List.of() : List.of();
     }
 }

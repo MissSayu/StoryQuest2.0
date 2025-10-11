@@ -15,13 +15,14 @@ public class StoryquestApplication {
         SpringApplication.run(StoryquestApplication.class, args);
     }
 
-    CommandLineRunner run(UserService userService, PasswordEncoder encoder) {
+    @Bean
+    CommandLineRunner run(UserService userService) {
         return args -> {
-            if(userService.findByUsername("Sayu") == null) {
-                userService.saveUser(new User("Sayu", encoder.encode("Password123"), "USER"));
+            if (userService.findByUsername("Sayu").isEmpty()) {
+                userService.saveUser(new User("Sayu", "Password123", "USER"));
             }
-            if(userService.findByUsername("Virelight") == null) {
-                userService.saveUser(new User("Virelight", encoder.encode("Mod123"), "MOD"));
+            if (userService.findByUsername("Virelight").isEmpty()) {
+                userService.saveUser(new User("Virelight", "Mod123", "MOD"));
             }
         };
     }
