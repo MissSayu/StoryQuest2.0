@@ -5,6 +5,7 @@ import com.vonk.storyquest.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,21 +19,29 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    public User saveUser(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    public void saveUser(User user) {
-        // Zet hier al meteen het wachtwoord geëncodeerd
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
+    public boolean checkPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
-    public boolean checkPassword(String username, String rawPassword) {
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) return false;
+    public User getUserOrNull(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
 
-        User user = userOpt.get();
-        return passwordEncoder.matches(rawPassword, user.getPassword());
+    // ===== New methods =====
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
     }
 }

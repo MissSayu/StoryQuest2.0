@@ -10,13 +10,24 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
     private String role;
 
-    public User() {} // lege constructor voor JPA
+    @Column(unique = true)
+    private String email;
+
+    private String avatarUrl = "/avatars/default.jpg"; // ✅ default avatar
+
+    @Column(columnDefinition = "TEXT")
+    private String bio = "This user hasn’t written a bio yet."; // ✅ default bio
+
+    public User() {}
 
     public User(String username, String password, String role) {
         this.username = username;
@@ -24,7 +35,7 @@ public class User {
         this.role = role;
     }
 
-    // Getters & setters
+    // Getters & setters...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -36,4 +47,13 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 }

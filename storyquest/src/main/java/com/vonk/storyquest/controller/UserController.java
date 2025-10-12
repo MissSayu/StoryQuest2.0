@@ -2,13 +2,15 @@ package com.vonk.storyquest.controller;
 
 import com.vonk.storyquest.model.User;
 import com.vonk.storyquest.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserController {
 
     private final UserService userService;
@@ -19,7 +21,13 @@ public class UserController {
 
     @GetMapping
     public List<User> getAllUsers() {
-        Optional<User> user = userService.findByUsername("Sayu");
-        return user != null ? List.of() : List.of();
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/username/{username}")
+    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+        return userService.findByUsername(username)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }
