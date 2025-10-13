@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-@Service // <-- make sure Spring can find this bean!
+@Service
 public class StoryService {
 
     private final StoryRepository storyRepository;
@@ -20,23 +20,28 @@ public class StoryService {
         this.episodeRepository = episodeRepository;
     }
 
-    // Get all stories
+    // ===== Get all stories =====
     public List<Story> getAllStories() {
         return storyRepository.findAll();
     }
 
-    // Get story by ID
+    // ===== Get story by ID =====
     public Optional<Story> getStoryById(Long id) {
         return storyRepository.findById(id);
     }
 
-    // Create a new story
+    // ===== Create new story =====
     public Story createStory(Story story) {
         story.setStatus("draft"); // default status
         return storyRepository.save(story);
     }
 
-    // Add an episode to a story
+    // ===== Update existing story =====
+    public Story updateStory(Story story) {
+        return storyRepository.save(story);
+    }
+
+    // ===== Add episode to story =====
     public Episode addEpisode(Long storyId, Episode episode) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new RuntimeException("Story not found"));
@@ -44,8 +49,13 @@ public class StoryService {
         return episodeRepository.save(episode);
     }
 
-    // Get all episodes of a story
+    // ===== Get all episodes of a story =====
     public List<Episode> getEpisodes(Long storyId) {
         return episodeRepository.findByStoryIdOrderByEpisodeOrder(storyId);
+    }
+
+    // ===== Get stories by user =====
+    public List<Story> getStoriesByUser(Long userId) {
+        return storyRepository.findByUserId(userId);
     }
 }
