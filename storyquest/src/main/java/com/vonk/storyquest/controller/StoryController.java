@@ -45,12 +45,17 @@ public class StoryController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found"));
     }
 
-    // ===== Get all stories by user =====
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<?> getStoriesByUser(@PathVariable Long userId) {
-        List<Story> stories = storyService.getStoriesByUser(userId);
+
+    @GetMapping("/username/{username}")
+    public ResponseEntity<?> getStoriesByUsername(@PathVariable String username) {
+        Optional<User> user = userRepository.findByUsername(username);
+        if (user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+        List<Story> stories = storyService.getStoriesByUser(user.get().getId());
         return ResponseEntity.ok(stories);
     }
+
 
     // ===== Create story with file uploads =====
     @PostMapping

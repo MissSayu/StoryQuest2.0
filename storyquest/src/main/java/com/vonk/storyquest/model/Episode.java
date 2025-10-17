@@ -1,5 +1,6 @@
 package com.vonk.storyquest.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ public class Episode {
 
     @ManyToOne
     @JoinColumn(name = "story_id", nullable = false)
+    @JsonBackReference  // <-- Add this to prevent circular JSON
     private Story story;
 
     // ===== Constructors =====
@@ -38,47 +40,20 @@ public class Episode {
     }
 
     // ===== Getters and Setters =====
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
-    public String getContent() {
-        return content;
-    }
+    public int getEpisodeOrder() { return episodeOrder; }
+    public void setEpisodeOrder(int episodeOrder) { this.episodeOrder = episodeOrder; }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
+    public LocalDateTime getPublicationDate() { return publicationDate; }
+    public void setPublicationDate(LocalDateTime publicationDate) { this.publicationDate = publicationDate; }
 
-    public int getEpisodeOrder() {
-        return episodeOrder;
-    }
-
-    public void setEpisodeOrder(int episodeOrder) {
-        this.episodeOrder = episodeOrder;
-    }
-
-    public LocalDateTime getPublicationDate() {
-        return publicationDate;
-    }
-
-    public void setPublicationDate(LocalDateTime publicationDate) {
-        this.publicationDate = publicationDate;
-    }
-
-    public Story getStory() {
-        return story;
-    }
-
-    public void setStory(Story story) {
-        this.story = story;
-    }
+    public Story getStory() { return story; }
+    public void setStory(Story story) { this.story = story; }
 }

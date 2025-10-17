@@ -1,5 +1,6 @@
 package com.vonk.storyquest.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +25,7 @@ public class Story {
     private LocalDateTime publishedAt;
 
     // Store cover image filename
-    private String coverImage;
+    private String coverImage = "http://localhost:8081/placeholders/book-cover-placeholder.png";
 
     // Optional comic file (PDF, ZIP, etc.)
     private String comicFilePath;
@@ -37,6 +38,7 @@ public class Story {
     private User user;
 
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference  // <-- Add this to prevent circular JSON
     private List<Episode> episodes;
 
     // ===== Getters & Setters =====
