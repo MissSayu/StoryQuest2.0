@@ -1,182 +1,158 @@
 package com.vonk.storyquest.controller;
 
+import com.vonk.storyquest.dto.StoryDTO;
 import com.vonk.storyquest.model.Episode;
 import com.vonk.storyquest.model.Story;
 import com.vonk.storyquest.model.User;
+import com.vonk.storyquest.repository.StoryRepository;
+import com.vonk.storyquest.repository.UserRepository;
 import com.vonk.storyquest.service.EpisodeService;
 import com.vonk.storyquest.service.StoryService;
-import com.vonk.storyquest.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/stories")
 @CrossOrigin(origins = "http://localhost:5173")
-public class StoryController {
+public class StoryController implements WebMvcConfigurer {
 
-    private final StoryService storyService;
-    private final EpisodeService episodeService;
-    private final UserRepository userRepository;
+    @Autowired
+    private StoryService storyService;
 
-    public StoryController(StoryService storyService, EpisodeService episodeService, UserRepository userRepository) {
-        this.storyService = storyService;
-        this.episodeService = episodeService;
-        this.userRepository = userRepository;
+    @Autowired
+    private EpisodeService episodeService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private StoryRepository storyRepository;
+
+    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + UPLOAD_DIR + "/");
     }
 
-    // ===== Get all stories =====
-    @GetMapping
-    public ResponseEntity<List<Story>> getAllStories() {
-        return ResponseEntity.ok(storyService.getAllStories());
-    }
-
-    // ===== Get single story =====
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getStory(@PathVariable Long id) {
-        Optional<Story> story = storyService.getStoryById(id);
-        return story.<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found"));
-    }
-
-
-    @GetMapping("/username/{username}")
-    public ResponseEntity<?> getStoriesByUsername(@PathVariable String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-        List<Story> stories = storyService.getStoriesByUser(user.get().getId());
-        return ResponseEntity.ok(stories);
-    }
-
-
-    // ===== Create story with file uploads =====
-    @PostMapping
-    public ResponseEntity<Story> createStory(
-            @RequestParam Long userId,
-            @RequestParam String title,
-            @RequestParam String description,
-            @RequestParam String type,
-            @RequestParam String genre,
-            @RequestParam(required = false) MultipartFile coverImage,
-            @RequestParam(required = false) MultipartFile comicFile
+    // Create story or add episode
+    @PostMapping("/create")
+    public ResponseEntity<?> createStory(
+            @RequestParam(required = false) Long storyId,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String content,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage
     ) {
+        try {
+            // Adding an episode to an existing story
+            if (storyId != null) {
+                Story parentStory = storyService.getStoryById(storyId);
+                if (parentStory == null) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Parent story not found with ID: " + storyId);
+                }
+
+                Episode episode = new Episode();
+                episode.setTitle(title != null ? title : "Episode " + (parentStory.getEpisodes().size() + 1));
+                episode.setContent(content != null ? content : "");
+                episode.setEpisodeOrder(parentStory.getEpisodes().size() + 1);
+                episode.setStory(parentStory);
+
+                episodeService.save(episode);
+                return ResponseEntity.ok(episode);
+            }
+
+            // Creating a new story
+            String coverImageUrl = null;
+            if (coverImage != null && !coverImage.isEmpty()) {
+                File uploadPath = new File(UPLOAD_DIR + "/covers");
+                if (!uploadPath.exists()) uploadPath.mkdirs();
+
+                String fileName = System.currentTimeMillis() + "_" + coverImage.getOriginalFilename();
+                Path filePath = Paths.get(uploadPath.getAbsolutePath(), fileName);
+                Files.copy(coverImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                coverImageUrl = "http://localhost:8081/uploads/covers/" + fileName;
+            }
+
+            Story newStory = storyService.createStory(title, description, type, userId, coverImageUrl, status);
+            return ResponseEntity.ok(new StoryDTO(newStory));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload image: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Failed to create story/episode: " + e.getMessage());
+        }
+    }
+
+    // Get all stories by a user ID
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<StoryDTO>> getStoriesByUserId(@PathVariable Long userId) {
+        List<Story> stories = storyService.getStoriesByUserIdIncludingDrafts(userId);
+        List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    // Get a story by its ID
+    @GetMapping("/{id}")
+    public ResponseEntity<StoryDTO> getStoryById(@PathVariable Long id) {
+        Story story = storyService.getStoryById(id);
+        return ResponseEntity.ok(new StoryDTO(story));
+    }
+
+    // Get stories by username
+    @GetMapping("/username/{username}")
+    public ResponseEntity<List<StoryDTO>> getStoriesByUsername(@PathVariable String username) {
+        List<Story> stories = storyService.getStoriesByUsername(username);
+        List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    // Get all stories
+    @GetMapping
+    public ResponseEntity<List<StoryDTO>> getAllStories() {
+        List<Story> stories = storyService.getAllStories();
+        List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    // Get random stories
+    @GetMapping("/random")
+    public ResponseEntity<List<StoryDTO>> getRandomStories(@RequestParam(defaultValue = "3") int count) {
+        List<Story> stories = storyService.getRandomStories(count);
+        List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    // Count stories by user
+    @GetMapping("/count/{userId}")
+    public ResponseEntity<Long> countStories(@PathVariable Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Story story = new Story();
-        story.setTitle(title);
-        story.setDescription(description);
-        story.setType(type);
-        story.setGenre(genre);
-        story.setUser(user);
-        story.setStatus("draft");
-
-        try {
-            String uploadDir = "uploads/stories/" + System.currentTimeMillis() + "/";
-            new File(uploadDir).mkdirs();
-
-            if (coverImage != null && !coverImage.isEmpty()) {
-                String coverName = System.currentTimeMillis() + "_" + coverImage.getOriginalFilename();
-                coverImage.transferTo(new File(uploadDir + coverName));
-                story.setCoverImage("/" + uploadDir + coverName);
-            }
-
-            if (comicFile != null && !comicFile.isEmpty()) {
-                String comicName = System.currentTimeMillis() + "_" + comicFile.getOriginalFilename();
-                comicFile.transferTo(new File(uploadDir + comicName));
-                story.setComicFilePath("/" + uploadDir + comicName);
-            }
-
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
-
-        Story createdStory = storyService.createStory(story);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdStory);
-    }
-
-    // ===== Add episode to story =====
-    @PostMapping("/{storyId}/episodes")
-    public ResponseEntity<?> addEpisode(@PathVariable Long storyId, @RequestBody Episode episode) {
-        try {
-            Episode createdEpisode = episodeService.addEpisode(storyId, episode);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdEpisode);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found");
-        }
-    }
-
-    // ===== Get all episodes =====
-    @GetMapping("/{storyId}/episodes")
-    public ResponseEntity<?> getEpisodes(@PathVariable Long storyId) {
-        try {
-            List<Episode> episodes = episodeService.getEpisodesByStory(storyId);
-            return ResponseEntity.ok(episodes);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found");
-        }
-    }
-
-    // ===== Upload cover or comic files for existing story =====
-    @PostMapping("/{id}/upload")
-    public ResponseEntity<?> uploadStoryFiles(
-            @PathVariable Long id,
-            @RequestParam(required = false) MultipartFile coverImage,
-            @RequestParam(required = false) MultipartFile comicFile) {
-
-        Optional<Story> optionalStory = storyService.getStoryById(id);
-        if (optionalStory.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found");
-        }
-
-        Story story = optionalStory.get();
-
-        try {
-            String uploadDir = "uploads/stories/" + story.getId() + "/";
-            new File(uploadDir).mkdirs();
-
-            if (coverImage != null && !coverImage.isEmpty()) {
-                String coverName = System.currentTimeMillis() + "_" + coverImage.getOriginalFilename();
-                coverImage.transferTo(new File(uploadDir + coverName));
-                story.setCoverImage("/" + uploadDir + coverName);
-            }
-
-            if (comicFile != null && !comicFile.isEmpty()) {
-                String comicName = System.currentTimeMillis() + "_" + comicFile.getOriginalFilename();
-                comicFile.transferTo(new File(uploadDir + comicName));
-                story.setComicFilePath("/" + uploadDir + comicName);
-            }
-
-            storyService.updateStory(story);
-            return ResponseEntity.ok("Files uploaded successfully.");
-
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("File upload failed: " + e.getMessage());
-        }
-    }
-
-    // ===== Publish story =====
-    @PutMapping("/{id}/publish")
-    public ResponseEntity<?> publishStory(@PathVariable Long id) {
-        Optional<Story> optionalStory = storyService.getStoryById(id);
-        if (optionalStory.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Story not found");
-        }
-
-        Story story = optionalStory.get();
-        story.setStatus("published");
-        story.setPublishedAt(LocalDateTime.now());
-        storyService.updateStory(story);
-
-        return ResponseEntity.ok("Story published successfully");
+        long count = storyRepository.countByUser(user); // fixed to match Story entity
+        return ResponseEntity.ok(count);
     }
 }

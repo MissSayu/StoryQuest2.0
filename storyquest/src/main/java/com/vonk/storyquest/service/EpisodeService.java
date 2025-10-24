@@ -1,38 +1,31 @@
 package com.vonk.storyquest.service;
 
 import com.vonk.storyquest.model.Episode;
-import com.vonk.storyquest.model.Story;
 import com.vonk.storyquest.repository.EpisodeRepository;
-import com.vonk.storyquest.repository.StoryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class EpisodeService {
 
-    private final EpisodeRepository episodeRepository;
-    private final StoryRepository storyRepository;
+    @Autowired
+    private EpisodeRepository episodeRepository;
 
-    public EpisodeService(EpisodeRepository episodeRepository, StoryRepository storyRepository) {
-        this.episodeRepository = episodeRepository;
-        this.storyRepository = storyRepository;
-    }
-
-    // Get all episodes for a story
-    public List<Episode> getEpisodesByStory(Long storyId) {
-        return episodeRepository.findByStoryIdOrderByEpisodeOrder(storyId);
-    }
-
-    // Create a new episode for a story
-    public Episode addEpisode(Long storyId, Episode episode) {
-        System.out.println(">>> Trying to add episode to storyId: " + storyId);
-        Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> new RuntimeException("Story not found"));
-        episode.setStory(story);
-        episode.setPublicationDate(LocalDateTime.now());
+    // Save or update an episode
+    public Episode save(Episode episode) {
         return episodeRepository.save(episode);
     }
-}
 
+    // Get episodes by story
+    public List<Episode> getEpisodesByStoryId(Long storyId) {
+        return episodeRepository.findByStoryIdOrderByEpisodeOrderAsc(storyId);
+    }
+
+    public Episode getEpisodeById(Long episodeId) {
+        return episodeRepository.findById(episodeId)
+                .orElse(null); // or throw an exception if you prefer
+    }
+
+}

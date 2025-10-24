@@ -22,10 +22,10 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    private String avatarUrl = "/avatars/default.jpg"; // ✅ default avatar
+    private String avatarUrl = "/avatars/default.jpg";
 
     @Column(columnDefinition = "TEXT")
-    private String bio = "This user hasn’t written a bio yet."; // ✅ default bio
+    private String bio = "This user hasn’t written a bio yet.";
 
     public User() {}
 
