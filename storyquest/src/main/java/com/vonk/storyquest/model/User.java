@@ -22,7 +22,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    private String avatarUrl = "/avatars/default.jpg";
+    private String avatarUrl = "http://localhost:8081/avatars/default.jpg";
 
     @Column(columnDefinition = "TEXT")
     private String bio = "This user hasn’t written a bio yet.";

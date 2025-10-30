@@ -10,12 +10,10 @@ import java.util.List;
 @Repository
 public interface StoryRepository extends JpaRepository<Story, Long> {
 
-    // Get all stories for a user by username
     List<Story> findByUserUsername(String username);
 
-    // Get all stories for a user by userId
     List<Story> findByUserId(Long userId);
 
-    // Count all stories for a user
+    List<Story> findByTitleContainingIgnoreCase(String title);
     long countByUser(User user);
 }

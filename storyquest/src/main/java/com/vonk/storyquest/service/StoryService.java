@@ -28,14 +28,16 @@ public class StoryService {
         this.episodeRepository = episodeRepository;
     }
 
-    // ===== Create story + Episode 1 =====
-    public Story createStory(String title, String description, String type, Long userId, String coverImageUrl, String status) {
+
+    public Story createStory(String title, String description, String genre, String type,
+                             Long userId, String coverImageUrl, String status, String episode1Content) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Story story = new Story();
         story.setTitle(title);
-        story.setDescription(description);
+        story.setDescription(description); // Episode 0
+        story.setGenre(genre);
         story.setType(type);
         story.setUser(user);
         story.setCoverImage(coverImageUrl);
@@ -43,10 +45,11 @@ public class StoryService {
 
         Story savedStory = storyRepository.save(story);
 
-        // Create Episode 1
+        // Create Episode 1 using separate content
         Episode firstEpisode = new Episode();
-        firstEpisode.setTitle("Episode 1");
-        firstEpisode.setContent(description);
+        firstEpisode.setTitle(title); // Episode 1 title same as story by default
+        firstEpisode.setContent(episode1Content != null ? episode1Content : "");
+        firstEpisode.setEpisodeOrder(1);
         firstEpisode.setStory(savedStory);
         episodeRepository.save(firstEpisode);
 
@@ -80,3 +83,4 @@ public class StoryService {
         return allStories.stream().limit(count).collect(Collectors.toList());
     }
 }
+

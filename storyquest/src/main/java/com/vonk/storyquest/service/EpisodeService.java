@@ -25,7 +25,7 @@ public class EpisodeService {
 
     public Episode getEpisodeById(Long episodeId) {
         return episodeRepository.findById(episodeId)
-                .orElse(null); // or throw an exception if you prefer
+                .orElse(null); 
     }
 
 }

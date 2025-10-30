@@ -19,7 +19,20 @@ public class AuthService {
         User user = userService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        return passwordEncoder.matches(password, user.getPassword());
+    }
 
-        return passwordEncoder.matches(password, ((User) user).getPassword());
+    // Temporary method to reset Lumine's password
+    public void resetLuminePassword() {
+        User user = userService.findByUsername("Lumine")
+                .orElseThrow(() -> new RuntimeException("Lumine not found"));
+
+        String rawPassword = "Fire123"; // new temporary password
+        String encoded = passwordEncoder.encode(rawPassword);
+        user.setPassword(encoded);
+
+        userService.saveUser(user);
+
+        System.out.println("Lumine's password has been reset!");
     }
 }

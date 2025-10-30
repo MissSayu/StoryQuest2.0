@@ -42,7 +42,8 @@ public class StoryController implements WebMvcConfigurer {
     @Autowired
     private StoryRepository storyRepository;
 
-    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
+    private static final String UPLOAD_DIR =
+            System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -50,20 +51,20 @@ public class StoryController implements WebMvcConfigurer {
                 .addResourceLocations("file:" + UPLOAD_DIR + "/");
     }
 
-    // Create story or add episode
     @PostMapping("/create")
     public ResponseEntity<?> createStory(
             @RequestParam(required = false) Long storyId,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String description,
+            @RequestParam(required = false) String genre,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String content,
+            @RequestParam(required = false) String storyContent,
             @RequestParam(value = "coverImage", required = false) MultipartFile coverImage
     ) {
         try {
-            // Adding an episode to an existing story
+            // ✅ If storyId exists → this is a new EPISODE
             if (storyId != null) {
                 Story parentStory = storyService.getStoryById(storyId);
                 if (parentStory == null) {
@@ -73,7 +74,7 @@ public class StoryController implements WebMvcConfigurer {
 
                 Episode episode = new Episode();
                 episode.setTitle(title != null ? title : "Episode " + (parentStory.getEpisodes().size() + 1));
-                episode.setContent(content != null ? content : "");
+                episode.setContent(storyContent != null ? storyContent : "");
                 episode.setEpisodeOrder(parentStory.getEpisodes().size() + 1);
                 episode.setStory(parentStory);
 
@@ -81,8 +82,9 @@ public class StoryController implements WebMvcConfigurer {
                 return ResponseEntity.ok(episode);
             }
 
-            // Creating a new story
+            // ✅ Otherwise → this is a new STORY
             String coverImageUrl = null;
+
             if (coverImage != null && !coverImage.isEmpty()) {
                 File uploadPath = new File(UPLOAD_DIR + "/covers");
                 if (!uploadPath.exists()) uploadPath.mkdirs();
@@ -91,10 +93,25 @@ public class StoryController implements WebMvcConfigurer {
                 Path filePath = Paths.get(uploadPath.getAbsolutePath(), fileName);
                 Files.copy(coverImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                coverImageUrl = "http://localhost:8081/uploads/covers/" + fileName;
+                // ✅ Save only relative path
+                coverImageUrl = "/uploads/covers/" + fileName;
             }
 
-            Story newStory = storyService.createStory(title, description, type, userId, coverImageUrl, status);
+            // ✅ Ensure genre and type are properly set
+            if (genre == null || genre.isBlank()) genre = "Unknown";
+            if (type == null || type.isBlank()) type = "story";
+
+            Story newStory = storyService.createStory(
+                    title,
+                    description,
+                    genre,
+                    type,
+                    userId,
+                    coverImageUrl,
+                    status,
+                    storyContent
+            );
+
             return ResponseEntity.ok(new StoryDTO(newStory));
 
         } catch (IOException e) {
@@ -108,7 +125,6 @@ public class StoryController implements WebMvcConfigurer {
         }
     }
 
-    // Get all stories by a user ID
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<StoryDTO>> getStoriesByUserId(@PathVariable Long userId) {
         List<Story> stories = storyService.getStoriesByUserIdIncludingDrafts(userId);
@@ -116,14 +132,12 @@ public class StoryController implements WebMvcConfigurer {
         return ResponseEntity.ok(dtos);
     }
 
-    // Get a story by its ID
     @GetMapping("/{id}")
     public ResponseEntity<StoryDTO> getStoryById(@PathVariable Long id) {
         Story story = storyService.getStoryById(id);
         return ResponseEntity.ok(new StoryDTO(story));
     }
 
-    // Get stories by username
     @GetMapping("/username/{username}")
     public ResponseEntity<List<StoryDTO>> getStoriesByUsername(@PathVariable String username) {
         List<Story> stories = storyService.getStoriesByUsername(username);
@@ -131,7 +145,6 @@ public class StoryController implements WebMvcConfigurer {
         return ResponseEntity.ok(dtos);
     }
 
-    // Get all stories
     @GetMapping
     public ResponseEntity<List<StoryDTO>> getAllStories() {
         List<Story> stories = storyService.getAllStories();
@@ -139,7 +152,6 @@ public class StoryController implements WebMvcConfigurer {
         return ResponseEntity.ok(dtos);
     }
 
-    // Get random stories
     @GetMapping("/random")
     public ResponseEntity<List<StoryDTO>> getRandomStories(@RequestParam(defaultValue = "3") int count) {
         List<Story> stories = storyService.getRandomStories(count);
@@ -147,12 +159,11 @@ public class StoryController implements WebMvcConfigurer {
         return ResponseEntity.ok(dtos);
     }
 
-    // Count stories by user
     @GetMapping("/count/{userId}")
     public ResponseEntity<Long> countStories(@PathVariable Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        long count = storyRepository.countByUser(user); // fixed to match Story entity
+        long count = storyRepository.countByUser(user);
         return ResponseEntity.ok(count);
     }
 }

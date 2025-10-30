@@ -2,7 +2,6 @@ package com.vonk.storyquest.controller;
 
 import com.vonk.storyquest.model.User;
 import com.vonk.storyquest.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +18,43 @@ public class UserController {
         this.userService = userService;
     }
 
+    // GET all users
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    // GET user by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
         return userService.findByUsername(username)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // UPDATE user (username, bio, avatarUrl)
+    @PutMapping("/{id}/update")
+    public ResponseEntity<User> updateUser(
+            @PathVariable Long id,
+            @RequestBody User updatedUser
+    ) {
+        return userService.getUserById(id)
+                .map(existingUser -> {
+                    existingUser.setUsername(updatedUser.getUsername());
+                    existingUser.setBio(updatedUser.getBio());
+                    existingUser.setAvatarUrl(updatedUser.getAvatarUrl());
+                    // Save without changing password
+                    userService.saveUserWithoutChangingPassword(existingUser);
+                    return ResponseEntity.ok(existingUser);
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

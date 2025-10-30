@@ -10,6 +10,6 @@ import java.util.List;
 @Repository
 public interface EpisodeRepository extends JpaRepository<Episode, Long> {
     List<Episode> findByStoryIdOrderByEpisodeOrderAsc(Long storyId);
-
     List<Episode> findByStory(Story story);
+    List<Episode> findByTitleContainingIgnoreCase(String title);
 }
