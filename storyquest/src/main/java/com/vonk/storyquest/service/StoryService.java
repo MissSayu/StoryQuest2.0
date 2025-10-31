@@ -36,7 +36,7 @@ public class StoryService {
 
         Story story = new Story();
         story.setTitle(title);
-        story.setDescription(description); // Episode 0
+        story.setDescription(description);
         story.setGenre(genre);
         story.setType(type);
         story.setUser(user);
@@ -45,9 +45,9 @@ public class StoryService {
 
         Story savedStory = storyRepository.save(story);
 
-        // Create Episode 1 using separate content
+
         Episode firstEpisode = new Episode();
-        firstEpisode.setTitle(title); // Episode 1 title same as story by default
+        firstEpisode.setTitle(title);
         firstEpisode.setContent(episode1Content != null ? episode1Content : "");
         firstEpisode.setEpisodeOrder(1);
         firstEpisode.setStory(savedStory);
@@ -57,7 +57,7 @@ public class StoryService {
         return savedStory;
     }
 
-    // ===== Fetch stories =====
+
     public List<Story> getStoriesByUserIdIncludingDrafts(Long userId) {
         return storyRepository.findByUserId(userId);
     }

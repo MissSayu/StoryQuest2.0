@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
-@Component  // ✅ Dit maakt hem een Spring Bean zodat @Autowired of constructor injection werkt
+@Component
 public class JwtUtil {
 
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);

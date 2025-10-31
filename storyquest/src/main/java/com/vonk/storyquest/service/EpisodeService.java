@@ -13,12 +13,12 @@ public class EpisodeService {
     @Autowired
     private EpisodeRepository episodeRepository;
 
-    // Save or update an episode
+
     public Episode save(Episode episode) {
         return episodeRepository.save(episode);
     }
 
-    // Get episodes by story
+
     public List<Episode> getEpisodesByStoryId(Long storyId) {
         return episodeRepository.findByStoryIdOrderByEpisodeOrderAsc(storyId);
     }

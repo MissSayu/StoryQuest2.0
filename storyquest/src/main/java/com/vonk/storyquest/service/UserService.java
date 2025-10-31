@@ -23,8 +23,6 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
-
-
     public User saveUserWithoutChangingPassword(User user) {
         return userRepository.save(user);
     }
@@ -64,4 +62,5 @@ public class UserService {
     public User getUserOrNull(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }
+
 }

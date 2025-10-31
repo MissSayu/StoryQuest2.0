@@ -30,6 +30,10 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:5173")
 public class StoryController implements WebMvcConfigurer {
 
+    private static final String UPLOAD_DIR =
+            System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
     @Autowired
     private StoryService storyService;
 
@@ -41,9 +45,6 @@ public class StoryController implements WebMvcConfigurer {
 
     @Autowired
     private StoryRepository storyRepository;
-
-    private static final String UPLOAD_DIR =
-            System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -64,7 +65,7 @@ public class StoryController implements WebMvcConfigurer {
             @RequestParam(value = "coverImage", required = false) MultipartFile coverImage
     ) {
         try {
-            // ✅ If storyId exists → this is a new EPISODE
+            // Valideren van parent story voor episode
             if (storyId != null) {
                 Story parentStory = storyService.getStoryById(storyId);
                 if (parentStory == null) {
@@ -78,28 +79,43 @@ public class StoryController implements WebMvcConfigurer {
                 episode.setEpisodeOrder(parentStory.getEpisodes().size() + 1);
                 episode.setStory(parentStory);
 
+                if (episode.getTitle().length() > 255)
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Episode title is te lang (max 255 tekens)");
+
                 episodeService.save(episode);
                 return ResponseEntity.ok(episode);
             }
 
-            // ✅ Otherwise → this is a new STORY
+            // Afbeelding upload
             String coverImageUrl = null;
-
             if (coverImage != null && !coverImage.isEmpty()) {
+                if (coverImage.getSize() > MAX_FILE_SIZE) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("Cover image is te groot (max 5 MB)");
+                }
+
                 File uploadPath = new File(UPLOAD_DIR + "/covers");
                 if (!uploadPath.exists()) uploadPath.mkdirs();
 
                 String fileName = System.currentTimeMillis() + "_" + coverImage.getOriginalFilename();
                 Path filePath = Paths.get(uploadPath.getAbsolutePath(), fileName);
                 Files.copy(coverImage.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // ✅ Save only relative path
                 coverImageUrl = "/uploads/covers/" + fileName;
             }
 
-            // ✅ Ensure genre and type are properly set
+            // Standaard waarden
             if (genre == null || genre.isBlank()) genre = "Unknown";
             if (type == null || type.isBlank()) type = "story";
+
+            // Validatie lengte
+            if (title != null && title.length() > 255)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Story title is te lang (max 255 tekens)");
+
+            if (description != null && description.length() > 2000)
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Description is te lang (max 2000 tekens)");
 
             Story newStory = storyService.createStory(
                     title,
@@ -157,13 +173,5 @@ public class StoryController implements WebMvcConfigurer {
         List<Story> stories = storyService.getRandomStories(count);
         List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
-    }
-
-    @GetMapping("/count/{userId}")
-    public ResponseEntity<Long> countStories(@PathVariable Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        long count = storyRepository.countByUser(user);
-        return ResponseEntity.ok(count);
     }
 }

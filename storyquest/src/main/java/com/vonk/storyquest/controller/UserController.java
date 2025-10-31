@@ -18,14 +18,12 @@ public class UserController {
         this.userService = userService;
     }
 
-    // GET all users
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-    // GET user by ID
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
@@ -40,7 +38,6 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // UPDATE user (username, bio, avatarUrl)
     @PutMapping("/{id}/update")
     public ResponseEntity<User> updateUser(
             @PathVariable Long id,
