@@ -1,11 +1,11 @@
 package com.vonk.storyquest.service;
 
+import com.vonk.storyquest.model.Episode;
 import com.vonk.storyquest.model.Story;
 import com.vonk.storyquest.model.User;
-import com.vonk.storyquest.model.Episode;
+import com.vonk.storyquest.repository.EpisodeRepository;
 import com.vonk.storyquest.repository.StoryRepository;
 import com.vonk.storyquest.repository.UserRepository;
-import com.vonk.storyquest.repository.EpisodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

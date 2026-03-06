@@ -1,6 +1,7 @@
 package com.vonk.storyquest.model;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity

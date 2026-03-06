@@ -1,4 +1,4 @@
-package com.vonk.storyquest.model;
+package com.vonk.storyquest.dto;
 
 public class LoginRequest {
     private String username;
