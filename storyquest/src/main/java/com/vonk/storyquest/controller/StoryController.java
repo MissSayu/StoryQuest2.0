@@ -3,7 +3,6 @@ package com.vonk.storyquest.controller;
 import com.vonk.storyquest.dto.StoryDTO;
 import com.vonk.storyquest.model.Episode;
 import com.vonk.storyquest.model.Story;
-import com.vonk.storyquest.model.User;
 import com.vonk.storyquest.repository.StoryRepository;
 import com.vonk.storyquest.repository.UserRepository;
 import com.vonk.storyquest.service.EpisodeService;
