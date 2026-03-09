@@ -78,7 +78,7 @@ class CommentControllerTest {
         user.setId(1L);
         user.setRole("MOD");
 
-        comment.setUser(user); // 👈 BELANGRIJK: comment heeft user nodig
+        comment.setUser(user); // BELANGRIJK: comment heeft user nodig
 
         when(commentService.getCommentById(1L)).thenReturn(comment);
         when(userService.getUserById(1L)).thenReturn(Optional.of(user));
