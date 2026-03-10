@@ -198,7 +198,7 @@ class StoryServiceTest {
     void getRandomStories_limitApplied() {
         // Arrange
         when(storyRepository.findAll())
-                .thenReturn(List.of(new Story(), new Story(), new Story()));
+                .thenReturn(new java.util.ArrayList<>(List.of(new Story(), new Story(), new Story())));
 
         // Act
         List<Story> result = storyService.getRandomStories(1);
@@ -206,6 +206,7 @@ class StoryServiceTest {
         // Assert
         assertEquals(1, result.size());
     }
+
 
     @Test
     void getRandomStories_countLargerThanList_returnsAll() {
