@@ -1,6 +1,6 @@
 package com.vonk.storyquest.model;
-
 import jakarta.persistence.*;
+import org.springframework.context.annotation.Profile;
 
 @Entity
 @Table(name = "users")
@@ -22,10 +22,8 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    private String avatarUrl = "http://localhost:8081/avatars/default.jpg";
-
-    @Column(columnDefinition = "TEXT")
-    private String bio = "This user hasn’t written a bio yet.";
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Profile profile;
 
     public User() {}
 
@@ -35,25 +33,51 @@ public class User {
         this.role = role;
     }
 
-    // Getters & setters...
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getPassword() {
+        return password;
+    }
 
-    public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
+    }
 }
