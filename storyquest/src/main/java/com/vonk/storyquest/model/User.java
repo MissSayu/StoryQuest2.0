@@ -1,6 +1,5 @@
 package com.vonk.storyquest.model;
 import jakarta.persistence.*;
-import org.springframework.context.annotation.Profile;
 
 @Entity
 @Table(name = "users")
