@@ -1,12 +1,3 @@
-In de Github staat nog een .idea map die een keer per ongeluk is mee gegaan. Ik heb hem eruit geprobeerd te verwijderen dit lukte niet. 
-
-git rm -r .idea         
-fatal: pathspec '.idea' did not match any files
-
-
-https://github.com/MissSayu/StoryQuest2.0.git
-
-
 Korte instalatie handleiding (backend only, verdere informatie te vinden in projectmap)
 
 ## Backend: 
