@@ -26,16 +26,21 @@ public class WebConfig {
 
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                Path uploadDir = Paths.get("storyquest/src/main/resources/static/uploads");
+                String projectDir = System.getProperty("user.dir");
+
+                Path uploadDir = Paths.get(projectDir, "src", "main", "resources", "static", "uploads");
                 String uploadPath = uploadDir.toFile().getAbsolutePath();
+
                 System.out.println("✅ Serving uploads from: " + uploadPath);
+
                 registry.addResourceHandler("/uploads/**")
                         .addResourceLocations("file:" + uploadPath + "/");
 
-
-                Path avatarsDir = Paths.get("storyquest/src/main/resources/static/avatars");
+                Path avatarsDir = Paths.get(projectDir, "src", "main", "resources", "static", "avatars");
                 String avatarsPath = avatarsDir.toFile().getAbsolutePath();
+
                 System.out.println("✅ Serving avatars from: " + avatarsPath);
+
                 registry.addResourceHandler("/avatars/**")
                         .addResourceLocations("file:" + avatarsPath + "/");
             }
