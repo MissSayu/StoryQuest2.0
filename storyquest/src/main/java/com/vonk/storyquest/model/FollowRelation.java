@@ -20,7 +20,7 @@ public class FollowRelation {
 
     @ManyToOne
     @JoinColumn(name = "story_id")
-    private Story story; // optional: for story follows
+    private Story story;
 
     public FollowRelation() {}
 

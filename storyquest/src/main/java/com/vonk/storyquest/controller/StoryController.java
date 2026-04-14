@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class StoryController implements WebMvcConfigurer {
 
     private static final String UPLOAD_DIR =
-            System.getProperty("user.dir") + "/storyquest/src/main/resources/static/uploads";
+            System.getProperty("user.dir") + "/src/main/resources/static/uploads";
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     @Autowired
