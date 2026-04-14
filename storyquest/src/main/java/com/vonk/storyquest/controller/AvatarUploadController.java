@@ -1,5 +1,7 @@
 package com.vonk.storyquest.controller;
 
+import com.vonk.storyquest.dto.UserDTO;
+import com.vonk.storyquest.model.Profile;
 import com.vonk.storyquest.model.User;
 import com.vonk.storyquest.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +31,7 @@ public class AvatarUploadController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             String projectDir = System.getProperty("user.dir");
-            String avatarsDirPath = projectDir + "/storyquest/src/main/resources/static/avatars";
+            String avatarsDirPath = projectDir + "/src/main/resources/static/avatars";
             File dir = new File(avatarsDirPath);
 
             if (!dir.exists() && !dir.mkdirs()) {
@@ -45,10 +47,16 @@ public class AvatarUploadController {
 
             file.transferTo(destination);
 
-            user.setAvatarUrl("/avatars/" + fileName);
-            userService.saveUserWithoutChangingPassword(user);
+            if (user.getProfile() == null) {
+                Profile profile = new Profile();
+                profile.setUser(user);
+                user.setProfile(profile);
+            }
 
-            return ResponseEntity.ok(user);
+            user.getProfile().setAvatarUrl("/avatars/" + fileName);
+            User savedUser = userService.saveUserWithoutChangingPassword(user);
+
+            return ResponseEntity.ok(new UserDTO(savedUser));
 
         } catch (IOException e) {
             e.printStackTrace();

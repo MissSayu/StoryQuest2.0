@@ -11,10 +11,15 @@ public class AuthorDTO {
     public AuthorDTO(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
-        this.bio = user.getBio();
-        this.avatarUrl = user.getAvatarUrl();
-    }
 
+        if (user.getProfile() != null) {
+            this.bio = user.getProfile().getBio();
+            this.avatarUrl = user.getProfile().getAvatarUrl();
+        } else {
+            this.bio = "This user hasn’t written a bio yet.";
+            this.avatarUrl = "http://localhost:8081/avatars/default.jpg";
+        }
+    }
 
     public Long getId() { return id; }
     public String getUsername() { return username; }
