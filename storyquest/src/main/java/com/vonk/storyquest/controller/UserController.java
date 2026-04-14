@@ -1,6 +1,6 @@
 package com.vonk.storyquest.controller;
 
-import com.vonk.storyquest.model.User;
+import com.vonk.storyquest.dto.UserDTO;
 import com.vonk.storyquest.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,39 +19,36 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers()
+                .stream()
+                .map(UserDTO::new)
+                .toList();
+
         return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
-                .map(ResponseEntity::ok)
+                .map(user -> ResponseEntity.ok(new UserDTO(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username) {
         return userService.findByUsername(username)
-                .map(ResponseEntity::ok)
+                .map(user -> ResponseEntity.ok(new UserDTO(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}/update")
-    public ResponseEntity<User> updateUser(
+    public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
-            @RequestBody User updatedUser
+            @RequestBody UserDTO updatedUser
     ) {
-        return userService.getUserById(id)
-                .map(existingUser -> {
-                    existingUser.setUsername(updatedUser.getUsername());
-                    existingUser.setBio(updatedUser.getBio());
-                    existingUser.setAvatarUrl(updatedUser.getAvatarUrl());
-                    // Save without changing password
-                    userService.saveUserWithoutChangingPassword(existingUser);
-                    return ResponseEntity.ok(existingUser);
-                })
+        return userService.updateUser(id, updatedUser)
+                .map(user -> ResponseEntity.ok(new UserDTO(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 }
