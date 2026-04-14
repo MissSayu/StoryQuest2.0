@@ -31,47 +31,60 @@ public class CommentController {
         this.userService = userService;
     }
 
-
     @GetMapping("/{episodeId}/comments")
     public ResponseEntity<List<CommentDTO>> getComments(@PathVariable Long episodeId) {
         List<CommentDTO> comments = commentService.getCommentsByEpisode(episodeId)
                 .stream()
                 .map(CommentDTO::new)
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(comments);
     }
-
 
     @PostMapping("/{episodeId}/comments/add")
     public ResponseEntity<CommentDTO> addComment(
             @PathVariable Long episodeId,
-            @RequestParam Long userId,
-            @RequestParam String textContent
+            @RequestBody CommentDTO request
     ) {
-        Comment comment = commentService.addComment(episodeId, userId, textContent);
+        Comment comment = commentService.addComment(
+                episodeId,
+                request.getUserId(),
+                request.getTextContent()
+        );
+
         return ResponseEntity.ok(new CommentDTO(comment));
     }
 
-
     @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<?> deleteComment(@PathVariable Long commentId, @RequestParam Long userId) {
+    public ResponseEntity<?> deleteComment(
+            @PathVariable Long commentId,
+            @RequestBody CommentDTO request
+    ) {
+        if (request.getUserId() == null) {
+            return ResponseEntity.badRequest().body("userId is verplicht.");
+        }
+
         Comment comment = commentService.getCommentById(commentId);
-        User user = userService.getUserById(userId)
+
+        User user = userService.getUserById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        boolean isOwner = comment.getUser() != null && comment.getUser().getId().equals(request.getUserId());
+        boolean isMod = "MOD".equalsIgnoreCase(user.getRole());
 
-        if (!comment.getUser().getId().equals(userId) && !"MOD".equalsIgnoreCase(user.getRole())) {
-            return ResponseEntity.status(403).body("Je hebt geen toestemming om deze reactie te verwijderen.");
+        if (!isOwner && !isMod) {
+            return ResponseEntity.status(403)
+                    .body("Je hebt geen toestemming om deze reactie te verwijderen.");
         }
 
         commentService.deleteComment(commentId);
         return ResponseEntity.ok("Comment deleted successfully");
     }
 
-
     @GetMapping("/{episodeId}/read")
     public ResponseEntity<?> readEpisode(@PathVariable Long episodeId) {
         Episode episode = episodeService.getEpisodeById(episodeId);
+
         List<CommentDTO> comments = commentService.getCommentsByEpisode(episodeId)
                 .stream()
                 .map(CommentDTO::new)
