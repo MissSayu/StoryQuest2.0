@@ -32,7 +32,7 @@ public class CommentController {
     }
 
     @GetMapping("/{episodeId}/comments")
-    public ResponseEntity<List<CommentDTO>> getComments(@PathVariable Long episodeId) {
+    public ResponseEntity<List<CommentDTO>> getComments(@PathVariable("episodeId") Long episodeId) {
         List<CommentDTO> comments = commentService.getCommentsByEpisode(episodeId)
                 .stream()
                 .map(CommentDTO::new)
@@ -43,7 +43,7 @@ public class CommentController {
 
     @PostMapping("/{episodeId}/comments/add")
     public ResponseEntity<CommentDTO> addComment(
-            @PathVariable Long episodeId,
+            @PathVariable("episodeId") Long episodeId,
             @RequestBody CommentDTO request
     ) {
         Comment comment = commentService.addComment(
@@ -57,7 +57,7 @@ public class CommentController {
 
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<?> deleteComment(
-            @PathVariable Long commentId,
+            @PathVariable("commentId") Long commentId,
             @RequestBody CommentDTO request
     ) {
         if (request.getUserId() == null) {
@@ -82,7 +82,7 @@ public class CommentController {
     }
 
     @GetMapping("/{episodeId}/read")
-    public ResponseEntity<?> readEpisode(@PathVariable Long episodeId) {
+    public ResponseEntity<?> readEpisode(@PathVariable("episodeId") Long episodeId) {
         Episode episode = episodeService.getEpisodeById(episodeId);
 
         List<CommentDTO> comments = commentService.getCommentsByEpisode(episodeId)

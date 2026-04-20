@@ -1,5 +1,7 @@
 package com.vonk.storyquest.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vonk.storyquest.dto.CommentDTO;
 import com.vonk.storyquest.model.Comment;
 import com.vonk.storyquest.model.Episode;
 import com.vonk.storyquest.model.User;
@@ -27,6 +29,8 @@ class CommentControllerTest {
 
     private MockMvc mockMvc;
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Mock
     private CommentService commentService;
 
@@ -47,10 +51,8 @@ class CommentControllerTest {
 
     @Test
     void getComments() throws Exception {
-        // Arrange
         when(commentService.getCommentsByEpisode(1L)).thenReturn(List.of());
 
-        // Act & Assert
         mockMvc.perform(get("/api/episodes/1/comments"))
                 .andExpect(status().isOk());
     }
@@ -58,6 +60,10 @@ class CommentControllerTest {
     @Test
     void addComment() throws Exception {
         // Arrange
+        CommentDTO request = new CommentDTO();
+        request.setUserId(1L);
+        request.setTextContent("Hallo");
+
         Comment comment = new Comment();
         comment.setTextContent("Hallo");
 
@@ -65,40 +71,42 @@ class CommentControllerTest {
 
         // Act & Assert
         mockMvc.perform(post("/api/episodes/1/comments/add")
-                        .param("userId", "1")
-                        .param("textContent", "Hallo")
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
+
     @Test
     void deleteComment() throws Exception {
         // Arrange
+        CommentDTO request = new CommentDTO();
+        request.setUserId(1L);
+
         Comment comment = new Comment();
         User user = new User();
         user.setId(1L);
         user.setRole("MOD");
 
-        comment.setUser(user); // BELANGRIJK: comment heeft user nodig
+        comment.setUser(user);
 
         when(commentService.getCommentById(1L)).thenReturn(comment);
         when(userService.getUserById(1L)).thenReturn(Optional.of(user));
 
         // Act & Assert
         mockMvc.perform(delete("/api/episodes/comments/1")
-                        .param("userId", "1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void readEpisode() throws Exception {
-        // Arrange
         Episode episode = new Episode();
         episode.setId(1L);
 
         when(episodeService.getEpisodeById(1L)).thenReturn(episode);
         when(commentService.getCommentsByEpisode(1L)).thenReturn(List.of());
 
-        // Act & Assert
         mockMvc.perform(get("/api/episodes/1/read"))
                 .andExpect(status().isOk());
     }

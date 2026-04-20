@@ -34,8 +34,7 @@ public class SearchController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> search(@RequestParam String q) {
-
+    public ResponseEntity<Map<String, Object>> search(@RequestParam("q") String q) {
         String query = q == null ? "" : q.trim();
 
         if (query.isBlank()) {
@@ -46,47 +45,56 @@ public class SearchController {
             return ResponseEntity.ok(empty);
         }
 
-        // USERS → DTO
+        String lowerQuery = query.toLowerCase();
+
         List<UserDTO> users = userRepository.findByUsernameContainingIgnoreCase(query)
                 .stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
 
-        // EPISODES → DTO
-        List<EpisodeDTO> episodeResults = episodeRepository.findByTitleContainingIgnoreCase(query)
-                .stream()
-                .map(EpisodeDTO::new)
-                .collect(Collectors.toList());
-
-        // STORIES
         Set<Long> addedStoryIds = new HashSet<>();
         List<StoryDTO> storyResults = new ArrayList<>();
 
-        List<Story> storiesByTitle = storyRepository.findByTitleContainingIgnoreCase(query);
-        for (Story s : storiesByTitle) {
-            storyResults.add(new StoryDTO(s));
-            addedStoryIds.add(s.getId());
-        }
-
         List<Story> allStories = storyRepository.findAll();
-        for (Story s : allStories) {
-            if (!addedStoryIds.contains(s.getId())) {
-                if (s.getDescription() != null &&
-                        s.getDescription().toLowerCase().contains(query.toLowerCase())) {
+        for (Story story : allStories) {
+            boolean matchesTitle =
+                    story.getTitle() != null &&
+                            story.getTitle().toLowerCase().contains(lowerQuery);
 
-                    storyResults.add(new StoryDTO(s));
-                    addedStoryIds.add(s.getId());
-                }
+            boolean matchesDescription =
+                    story.getDescription() != null &&
+                            story.getDescription().toLowerCase().contains(lowerQuery);
+
+            if (matchesTitle || matchesDescription) {
+                storyResults.add(new StoryDTO(story));
+                addedStoryIds.add(story.getId());
             }
         }
 
-        // Episodes → voeg parent story toe
-        List<Episode> matchingEpisodes = episodeRepository.findByTitleContainingIgnoreCase(query);
-        for (Episode ep : matchingEpisodes) {
-            Story parent = ep.getStory();
-            if (parent != null && !addedStoryIds.contains(parent.getId())) {
-                storyResults.add(new StoryDTO(parent));
-                addedStoryIds.add(parent.getId());
+        List<Episode> allEpisodes = episodeRepository.findAll();
+        List<EpisodeDTO> episodeResults = new ArrayList<>();
+
+        for (Episode episode : allEpisodes) {
+            boolean matchesTitle =
+                    episode.getTitle() != null &&
+                            episode.getTitle().toLowerCase().contains(lowerQuery);
+
+            boolean matchesContent =
+                    episode.getContent() != null &&
+                            episode.getContent().toLowerCase().contains(lowerQuery);
+
+            boolean matchesComicUrl =
+                    episode.getComicUrl() != null &&
+                            episode.getComicUrl().toLowerCase().contains(lowerQuery);
+
+            if (matchesTitle || matchesContent || matchesComicUrl) {
+                episodeResults.add(new EpisodeDTO(episode));
+
+                Story parent = episode.getStory();
+                if (parent != null && !addedStoryIds.contains(parent.getId())) {
+                    storyResults.add(new StoryDTO(parent));
+                    addedStoryIds.add(parent.getId());
+                }
             }
         }
 

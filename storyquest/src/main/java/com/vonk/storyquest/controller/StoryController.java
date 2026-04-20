@@ -53,18 +53,17 @@ public class StoryController implements WebMvcConfigurer {
 
     @PostMapping("/create")
     public ResponseEntity<?> createStory(
-            @RequestParam(required = false) Long storyId,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) String description,
-            @RequestParam(required = false) String genre,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String storyContent,
-            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage
+            @RequestParam(name = "storyId", required = false) Long storyId,
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "description", required = false) String description,
+            @RequestParam(name = "genre", required = false) String genre,
+            @RequestParam(name = "type", required = false) String type,
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "storyContent", required = false) String storyContent,
+            @RequestParam(name = "coverImage", required = false) MultipartFile coverImage
     ) {
         try {
-            // Valideren van parent story voor episode
             if (storyId != null) {
                 Story parentStory = storyService.getStoryById(storyId);
                 if (parentStory == null) {
@@ -78,15 +77,15 @@ public class StoryController implements WebMvcConfigurer {
                 episode.setEpisodeOrder(parentStory.getEpisodes().size() + 1);
                 episode.setStory(parentStory);
 
-                if (episode.getTitle().length() > 255)
+                if (episode.getTitle().length() > 255) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                             .body("Episode title is te lang (max 255 tekens)");
+                }
 
                 episodeService.save(episode);
                 return ResponseEntity.ok(episode);
             }
 
-            // Afbeelding upload
             String coverImageUrl = null;
             if (coverImage != null && !coverImage.isEmpty()) {
                 if (coverImage.getSize() > MAX_FILE_SIZE) {
@@ -95,7 +94,9 @@ public class StoryController implements WebMvcConfigurer {
                 }
 
                 File uploadPath = new File(UPLOAD_DIR + "/covers");
-                if (!uploadPath.exists()) uploadPath.mkdirs();
+                if (!uploadPath.exists()) {
+                    uploadPath.mkdirs();
+                }
 
                 String fileName = System.currentTimeMillis() + "_" + coverImage.getOriginalFilename();
                 Path filePath = Paths.get(uploadPath.getAbsolutePath(), fileName);
@@ -103,18 +104,18 @@ public class StoryController implements WebMvcConfigurer {
                 coverImageUrl = "/uploads/covers/" + fileName;
             }
 
-            // Standaard waarden
             if (genre == null || genre.isBlank()) genre = "Unknown";
             if (type == null || type.isBlank()) type = "story";
 
-            // Validatie lengte
-            if (title != null && title.length() > 255)
+            if (title != null && title.length() > 255) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Story title is te lang (max 255 tekens)");
+            }
 
-            if (description != null && description.length() > 2000)
+            if (description != null && description.length() > 2000) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body("Description is te lang (max 2000 tekens)");
+            }
 
             Story newStory = storyService.createStory(
                     title,
@@ -141,20 +142,20 @@ public class StoryController implements WebMvcConfigurer {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<StoryDTO>> getStoriesByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<StoryDTO>> getStoriesByUserId(@PathVariable("userId") Long userId) {
         List<Story> stories = storyService.getStoriesByUserIdIncludingDrafts(userId);
         List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StoryDTO> getStoryById(@PathVariable Long id) {
+    public ResponseEntity<StoryDTO> getStoryById(@PathVariable("id") Long id) {
         Story story = storyService.getStoryById(id);
         return ResponseEntity.ok(new StoryDTO(story));
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<List<StoryDTO>> getStoriesByUsername(@PathVariable String username) {
+    public ResponseEntity<List<StoryDTO>> getStoriesByUsername(@PathVariable("username") String username) {
         List<Story> stories = storyService.getStoriesByUsername(username);
         List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
@@ -168,7 +169,9 @@ public class StoryController implements WebMvcConfigurer {
     }
 
     @GetMapping("/random")
-    public ResponseEntity<List<StoryDTO>> getRandomStories(@RequestParam(defaultValue = "3") int count) {
+    public ResponseEntity<List<StoryDTO>> getRandomStories(
+            @RequestParam(name = "count", defaultValue = "3") int count
+    ) {
         List<Story> stories = storyService.getRandomStories(count);
         List<StoryDTO> dtos = stories.stream().map(StoryDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
